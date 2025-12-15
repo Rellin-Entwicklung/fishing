@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg"
+     width="1400" height="900" viewBox="0 0 1400 900">
+
+  <defs>
+    <style>
+      text { font-family: Arial, Helvetica, sans-serif; fill:#111; }
+      .title { font-size:36px; font-weight:bold; }
+      .lane  { font-size:18px; font-weight:bold; fill:#444; }
+      .box   { fill:#f6f8fb; stroke:#222; stroke-width:2; }
+      .box-title { font-size:16px; font-weight:bold; }
+      .box-text  { font-size:13px; }
+      .arrow { stroke:#222; stroke-width:2; fill:none; marker-end:url(#arrow); }
+    </style>
+
+    <marker id="arrow" markerWidth="10" markerHeight="10"
+            refX="9" refY="3" orient="auto">
+      <path d="M0,0 L9,3 L0,6 Z" fill="#222"/>
+    </marker>
+  </defs>
+
+  <!-- Title -->
+  <text x="700" y="50" text-anchor="middle" class="title">
+    KI-basierte Bildverarbeitung – Technische Architektur
+  </text>
+
+  <!-- Swimlane labels -->
+  <text x="40" y="160" class="lane">Preprocessing</text>
+  <text x="40" y="380" class="lane">KI-Verarbeitung</text>
+  <text x="40" y="600" class="lane">Postprocessing & Export</text>
+
+  <!-- Lane separators -->
+  <line x1="30" y1="200" x2="1370" y2="200" stroke="#ccc" stroke-width="2"/>
+  <line x1="30" y1="420" x2="1370" y2="420" stroke="#ccc" stroke-width="2"/>
+
+  <!-- Preprocessing -->
+  <rect x="120" y="110" rx="15" ry="15" width="260" height="90" class="box"/>
+  <text x="250" y="140" text-anchor="middle" class="box-title">Bildladung</text>
+  <text x="250" y="162" text-anchor="middle" class="box-text">Validierung · Qualität</text>
+  <text x="250" y="178" text-anchor="middle" class="box-text">Helligkeit · Sättigung</text>
+
+  <rect x="420" y="110" rx="15" ry="15" width="300" height="90" class="box"/>
+  <text x="570" y="140" text-anchor="middle" class="box-title">Farbraum-Optimierung</text>
+  <text x="570" y="162" text-anchor="middle" class="box-text">LAB · CLAHE · HSV</text>
+  <text x="570" y="178" text-anchor="middle" class="box-text">PIL-Konvertierung</text>
+
+  <rect x="760" y="110" rx="15" ry="15" width="360" height="90" class="box"/>
+  <text x="940" y="140" text-anchor="middle" class="box-title">Format-Normalisierung</text>
+  <text x="940" y="162" text-anchor="middle" class="box-text">KI-Vorbereitung</text>
+  <text x="940" y="178" text-anchor="middle" class="box-text">Hintergrundentfernung</text>
+
+  <!-- KI -->
+  <rect x="460" y="260" rx="20" ry="20" width="420" height="120" class="box"/>
+  <text x="670" y="295" text-anchor="middle" class="box-title">Deep-Learning-Modell</text>
+  <text x="670" y="320" text-anchor="middle" class="box-text">Objekterkennung</text>
+  <text x="670" y="336" text-anchor="middle" class="box-text">Alpha-Kanal-Generierung</text>
+  <text x="670" y="352" text-anchor="middle" class="box-text">Schatten-Artefakt-Entfernung</text>
+
+  <!-- Postprocessing -->
+  <rect x="120" y="500" rx="15" ry="15" width="320" height="100" class="box"/>
+  <text x="280" y="530" text-anchor="middle" class="box-title">Transparenz-Analyse</text>
+  <text x="280" y="552" text-anchor="middle" class="box-text">Morphologie · Randglättung</text>
+
+  <rect x="500" y="500" rx="15" ry="15" width="340" height="100" class="box"/>
+  <text x="670" y="530" text-anchor="middle" class="box-title">Objektgeometrie</text>
+  <text x="670" y="552" text-anchor="middle" class="box-text">Bounding Box · Zentrierung</text>
+
+  <rect x="900" y="500" rx="15" ry="15" width="360" height="100" class="box"/>
+  <text x="1080" y="530" text-anchor="middle" class="box-title">Layout & Export</text>
+  <text x="1080" y="552" text-anchor="middle" class="box-text">Quadrat · Weißer BG</text>
+  <text x="1080" y="568" text-anchor="middle" class="box-text">Denoise · Schärfung · WebP</text>
+
+  <!-- Arrows -->
+  <line x1="380" y1="155" x2="420" y2="155" class="arrow"/>
+  <line x1="720" y1="155" x2="760" y2="155" class="arrow"/>
+  <line x1="940" y1="200" x2="670" y2="260" class="arrow"/>
+  <line x1="670" y1="380" x2="280" y2="500" class="arrow"/>
+  <line x1="440" y1="550" x2="500" y2="550" class="arrow"/>
+  <line x1="840" y1="550" x2="900" y2="550" class="arrow"/>
+
+</svg>
