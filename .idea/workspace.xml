@@ -4,13 +4,71 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="d0300a41-b77c-4e92-8402-3f0264c5c3cd" name="Changes" comment="first">
+    <list default="true" id="d0300a41-b77c-4e92-8402-3f0264c5c3cd" name="Changes" comment="nach test">
+      <change afterPath="$PROJECT_DIR$/.venv/.gitignore" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.venv/CACHEDIR.TAG" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.venv/ProductImageProcessor.spec" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.venv/complete_pipeline.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.venv/dist/ProductImageProcessor.exe" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.venv/dist/ProductImageProcessor/ProductImageProcessor.exe" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.venv/dist/ProductImageProcessor/_internal/MSVCP140_1.dll" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.venv/dist/ProductImageProcessor/_internal/VCOMP140.DLL" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.venv/dist/ProductImageProcessor/_internal/_asyncio.pyd" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.venv/dist/ProductImageProcessor/_internal/_bz2.pyd" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.venv/dist/ProductImageProcessor/_internal/_ctypes.pyd" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.venv/dist/ProductImageProcessor/_internal/_decimal.pyd" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.venv/dist/ProductImageProcessor/_internal/_elementtree.pyd" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.venv/dist/ProductImageProcessor/_internal/_hashlib.pyd" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.venv/dist/ProductImageProcessor/_internal/_lzma.pyd" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.venv/dist/ProductImageProcessor/_internal/_multiprocessing.pyd" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.venv/dist/ProductImageProcessor/_internal/_overlapped.pyd" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.venv/dist/ProductImageProcessor/_internal/_queue.pyd" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.venv/dist/ProductImageProcessor/_internal/_socket.pyd" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.venv/dist/ProductImageProcessor/_internal/_ssl.pyd" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.venv/dist/ProductImageProcessor/_internal/_uuid.pyd" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.venv/dist/ProductImageProcessor/_internal/_wmi.pyd" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.venv/dist/ProductImageProcessor/_internal/base_library.zip" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.venv/dist/ProductImageProcessor/_internal/libcrypto-3.dll" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.venv/dist/ProductImageProcessor/_internal/libffi-8.dll" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.venv/dist/ProductImageProcessor/_internal/libssl-3.dll" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.venv/dist/ProductImageProcessor/_internal/msvcp140.dll" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.venv/dist/ProductImageProcessor/_internal/pyexpat.pyd" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.venv/dist/ProductImageProcessor/_internal/python3.dll" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.venv/dist/ProductImageProcessor/_internal/python313.dll" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.venv/dist/ProductImageProcessor/_internal/select.pyd" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.venv/dist/ProductImageProcessor/_internal/unicodedata.pyd" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.venv/dist/ProductImageProcessor/_internal/vcruntime140.dll" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.venv/dist/ProductImageProcessor/_internal/vcruntime140_1.dll" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.venv/dist/ProductImageProcessor/product_processor_2025-12-10.log" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.venv/dist/gummifisch_final.webp" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.venv/dist/p6.jpg" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.venv/dist/product_processor_2025-12-10.log" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.venv/gradio_2_app.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.venv/gradio_app.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.venv/gummifisch_final.webp" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.venv/p3.jpg" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.venv/p4.jpg" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.venv/p5.jpg" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.venv/p6.jpg" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.venv/pipeline_GUI.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.venv/product_processor_2025-12-10.log" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.venv/pyvenv.cfg" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.venv/reba_enha.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.venv/remove_bg.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.venv/skroach.jpg" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Python Script" />
+      </list>
+    </option>
   </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
@@ -39,6 +97,10 @@
   "keyToString": {
     "ModuleVcsDetector.initialDetectionPerformed": "true",
     "Python.complete_pipeline.executor": "Run",
+    "Python.gradio_2_app.executor": "Run",
+    "Python.gradio_app.executor": "Run",
+    "Python.pipeline_GUI.executor": "Run",
+    "Python.reba_enha.executor": "Run",
     "Python.remove_bg.executor": "Run",
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
@@ -75,11 +137,20 @@
       <option name="project" value="LOCAL" />
       <updated>1765283196655</updated>
     </task>
-    <option name="localTasksCounter" value="2" />
+    <task id="LOCAL-00002" summary="nach test">
+      <option name="closed" value="true" />
+      <created>1765368010992</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1765368010992</updated>
+    </task>
+    <option name="localTasksCounter" value="3" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="first" />
-    <option name="LAST_COMMIT_MESSAGE" value="first" />
+    <MESSAGE value="nach test" />
+    <option name="LAST_COMMIT_MESSAGE" value="nach test" />
   </component>
 </project>
