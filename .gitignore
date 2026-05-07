@@ -1,0 +1,9 @@
+# Virtual env & tooling
+.venv/
+__pycache__/
+.idea/
+
+# Laufzeit / Ergebnisse
+*.log
+ergebnisse/
+sess_01/
