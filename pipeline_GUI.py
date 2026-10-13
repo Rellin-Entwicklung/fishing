@@ -8,6 +8,22 @@ import threading
 from pathlib import Path
 from loguru import logger
 import sys
+import tkinter as tk
+from tkinter import messagebox
+
+from output_names import collect_images, prepare_named_batch, scan_name_list_status
+
+from axis_alignment import (
+    align_image_vertical,
+    apply_final_rotation,
+    ALIGNMENT_MODE_LABELS,
+    FINAL_ROTATION_ANGLES,
+    FINAL_ROTATION_LABELS,
+    final_rotation_angle_to_label,
+    final_rotation_label_to_angle,
+    label_to_mode,
+    mode_to_label,
+)
 
 # Loguru Konfiguration
 logger.remove()
@@ -31,6 +47,8 @@ class ProductImageProcessor:
         self.output_folder = ""
         self.last_processed_image = None
         self.stats = {"processed": 0, "successful": 0, "failed": 0}
+        self.batch_image_files: list[Path] | None = None
+        self.batch_output_names: list[str] | None = None
 
         # Einstellungen
         self.settings = {
@@ -40,7 +58,10 @@ class ProductImageProcessor:
             "auto_correct": True,
             "resize": True,
             "saturation": 150,  # 150% = Faktor 1.5
-            "brightness": 110  # 110% = Faktor 1.1
+            "brightness": 110,  # 110% = Faktor 1.1
+            "alignment_mode": "auto",
+            "final_rotation": 0,
+            "use_name_list": False,
         }
 
     def optimize_brightness_saturation(self, image, brightness_factor, saturation_factor):
@@ -236,6 +257,17 @@ class ProductImageProcessor:
                 if no_bg.mode == 'RGBA':
                     no_bg = self.remove_shadow_artifacts(no_bg)
 
+                alignment_mode = self.settings.get("alignment_mode", "auto")
+                if alignment_mode != "off":
+                    logger.info(f"Richte Achse aus (Modus: {alignment_mode})...")
+                    no_bg, applied_angle, align_method = align_image_vertical(
+                        no_bg, mode=alignment_mode
+                    )
+                    if abs(applied_angle) >= 0.5:
+                        logger.success(f"Ausrichtung: {applied_angle:.1f}° ({align_method})")
+                    else:
+                        logger.info(f"Keine Drehung nötig (Methode: {align_method})")
+
                 # 6. Objektgrenzen ermitteln
                 if no_bg.mode == 'RGBA':
                     alpha_array = np.array(no_bg.split()[3])
@@ -278,6 +310,11 @@ class ProductImageProcessor:
             else:
                 final_pil = white_bg
 
+            final_rotation = self.settings.get("final_rotation", 0)
+            if final_rotation in (90, 180, 270):
+                logger.info(f"Finale Drehung: {final_rotation}°")
+                final_pil = apply_final_rotation(final_pil, final_rotation)
+
             # Als WebP speichern
             final_pil.save(output_path, 'WEBP', quality=95)
 
@@ -298,13 +335,12 @@ class ProductImageProcessor:
         # Erstelle Ausgabeordner falls nicht vorhanden
         os.makedirs(self.output_folder, exist_ok=True)
 
-        # Finde alle Bilddateien
-        image_extensions = ['.jpg', '.jpeg', '.png', '.webp', '.bmp']
-        image_files = []
-
-        for ext in image_extensions:
-            image_files.extend(Path(self.input_folder).glob(f'*{ext}'))
-            image_files.extend(Path(self.input_folder).glob(f'*{ext.upper()}'))
+        if self.batch_image_files is not None and self.batch_output_names is not None:
+            image_files = self.batch_image_files
+            output_names = self.batch_output_names
+        else:
+            image_files = collect_images(self.input_folder)
+            output_names = None
 
         total = len(image_files)
         logger.info(f"Gefunden: {total} Bilder zum Verarbeiten")
@@ -316,11 +352,13 @@ class ProductImageProcessor:
         # Verarbeite jedes Bild
         for idx, img_path in enumerate(image_files, 1):
             try:
-                # Ausgabedateiname
-                output_name = img_path.stem + '_optimized.webp'
+                if output_names is not None:
+                    output_name = output_names[idx - 1]
+                else:
+                    output_name = img_path.stem + "_optimized.webp"
                 output_path = os.path.join(self.output_folder, output_name)
 
-                logger.info(f"[{idx}/{total}] Verarbeite {img_path.name}...")
+                logger.info(f"[{idx}/{total}] Verarbeite {img_path.name} → {output_name}")
 
                 # Verarbeite Bild
                 result = self.process_single_image(str(img_path), output_path)
@@ -342,6 +380,8 @@ class ProductImageProcessor:
                 self.update_gui()
 
         logger.success(f"Verarbeitung abgeschlossen! {self.stats['successful']}/{total} erfolgreich")
+        self.batch_image_files = None
+        self.batch_output_names = None
 
     def update_gui(self):
         """Aktualisiert die GUI mit den aktuellen Werten"""
@@ -384,10 +424,24 @@ class ProductImageProcessor:
 processor = ProductImageProcessor()
 
 
+def refresh_name_list_status():
+    if not dpg.does_item_exist("name_list_status"):
+        return
+    if not processor.input_folder:
+        dpg.set_value("name_list_status", "Eingabeordner nicht gewählt")
+        return
+    if processor.settings.get("use_name_list"):
+        dpg.set_value("name_list_status", scan_name_list_status(processor.input_folder))
+    else:
+        images = len(collect_images(processor.input_folder))
+        dpg.set_value("name_list_status", f"Deaktiviert ({images} Bilder im Ordner)")
+
+
 def select_input_folder(sender, app_data):
     processor.input_folder = app_data['file_path_name']
     dpg.set_value("input_folder_text", processor.input_folder)
     logger.info(f"Eingabeordner: {processor.input_folder}")
+    refresh_name_list_status()
 
 
 def select_output_folder(sender, app_data):
@@ -399,13 +453,40 @@ def select_output_folder(sender, app_data):
 def update_setting(setting_name, value):
     processor.settings[setting_name] = value
     logger.debug(f"Einstellung geändert: {setting_name} = {value}")
+    if setting_name == "use_name_list":
+        refresh_name_list_status()
+
+
+def _show_error(title: str, message: str):
+    root = tk.Tk()
+    root.withdraw()
+    messagebox.showerror(title, message)
+    root.destroy()
 
 
 def start_processing():
     """Startet die Verarbeitung in einem separaten Thread"""
     if not processor.input_folder or not processor.output_folder:
         logger.warning("Bitte beide Ordner auswählen!")
+        _show_error("Fehler", "Bitte Eingabe- und Ausgabeordner wählen.")
         return
+
+    processor.batch_image_files = None
+    processor.batch_output_names = None
+
+    if processor.settings.get("use_name_list"):
+        try:
+            image_files, output_names, md_path = prepare_named_batch(processor.input_folder)
+            processor.batch_image_files = image_files
+            processor.batch_output_names = output_names
+            logger.info(
+                f"Namensliste {md_path.name}: {len(output_names)} Einträge, "
+                f"{len(image_files)} Bilder – Anzahl stimmt überein."
+            )
+        except (ValueError, FileNotFoundError, OSError) as e:
+            logger.error(f"Namensliste: {e}")
+            _show_error("Namensliste", str(e))
+            return
 
     # Statistik zurücksetzen
     processor.stats = {"processed": 0, "successful": 0, "failed": 0}
@@ -455,6 +536,19 @@ def create_gui():
                     dpg.add_input_text(tag="output_folder_text", default_value="Nicht ausgewählt",
                                        width=300, readonly=True)
 
+                    dpg.add_spacer(height=10)
+                    dpg.add_checkbox(
+                        label="Namen aus .md-Liste im Eingabeordner",
+                        default_value=False,
+                        callback=lambda s, v: update_setting("use_name_list", v),
+                    )
+                    dpg.add_text(
+                        "Eine Zeile pro Name; genau eine .md-Datei im Ordner.",
+                        color=(120, 120, 120),
+                    )
+                    dpg.add_text("Namensliste:", color=(150, 150, 150))
+                    dpg.add_text("—", tag="name_list_status", color=(180, 200, 255))
+
                 dpg.add_spacer(height=10)
 
                 # Funktionen
@@ -469,6 +563,30 @@ def create_gui():
                                      callback=lambda s, v: update_setting("auto_correct", v))
                     dpg.add_checkbox(label="Größe anpassen (1024x1024)", default_value=True,
                                      callback=lambda s, v: update_setting("resize", v))
+
+                    dpg.add_spacer(height=8)
+                    dpg.add_text("Ausrichtung:")
+                    dpg.add_combo(
+                        items=list(ALIGNMENT_MODE_LABELS.values()),
+                        default_value=mode_to_label("auto"),
+                        width=300,
+                        tag="alignment_mode_combo",
+                        callback=lambda s, v: update_setting(
+                            "alignment_mode", label_to_mode(v)
+                        ),
+                    )
+
+                    dpg.add_spacer(height=8)
+                    dpg.add_text("Finale Drehung:")
+                    dpg.add_combo(
+                        items=[FINAL_ROTATION_LABELS[a] for a in FINAL_ROTATION_ANGLES],
+                        default_value=final_rotation_angle_to_label(0),
+                        width=300,
+                        tag="final_rotation_combo",
+                        callback=lambda s, v: update_setting(
+                            "final_rotation", final_rotation_label_to_angle(v)
+                        ),
+                    )
 
                 dpg.add_spacer(height=10)
 

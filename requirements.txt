@@ -1,5 +1,6 @@
 # Bild-Pipeline, GUIs (tkinter/dearpygui/gradio), Excel-Listen
 dearpygui>=1.10
+customtkinter>=6.0.0
 gradio>=4.0
 loguru>=0.7
 numpy>=1.24
@@ -7,5 +8,6 @@ opencv-python>=4.8
 openpyxl>=3.1
 pandas>=2.0
 pillow>=10.0
+rawpy>=0.21
 rembg>=2.0
 requests>=2.31

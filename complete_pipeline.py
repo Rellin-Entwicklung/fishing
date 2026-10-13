@@ -7,6 +7,8 @@ import sys
 from loguru import logger
 import gradio
 
+from axis_alignment import align_image_vertical, apply_final_rotation
+
 # Loguru Konfiguration
 logger.remove()  # Standard-Handler entfernen
 logger.add(
@@ -283,7 +285,7 @@ def create_centered_square_with_padding(image_pil, bounds, target_size=1024, pad
     return cropped
 
 
-def process_product_image(input_path, output_path):
+def process_product_image(input_path, output_path, alignment_mode="auto", final_rotation=0):
     """Hauptfunktion: Verarbeitet das Produktbild komplett"""
 
     logger.info("=" * 80)
@@ -355,6 +357,15 @@ def process_product_image(input_path, output_path):
     else:
         logger.warning("Überspringe Schatten-Entfernung (kein Alpha-Kanal)")
 
+    # 5b. Achse senkrecht ausrichten
+    if no_bg.mode == 'RGBA' and alignment_mode != "off":
+        logger.info(f"SCHRITT 5b/8: Richte Achse aus (Modus: {alignment_mode})")
+        no_bg, applied_angle, align_method = align_image_vertical(no_bg, mode=alignment_mode)
+        if abs(applied_angle) >= 0.5:
+            logger.success(f"Ausrichtung: {applied_angle:.1f}° ({align_method})")
+        else:
+            logger.info(f"Keine Drehung nötig (Methode: {align_method})")
+
     # 6. Objektgrenzen aus Alpha-Kanal ermitteln
     logger.info("SCHRITT 6/8: Ermittle Objektgrenzen")
     if no_bg.mode == 'RGBA':
@@ -407,6 +418,10 @@ def process_product_image(input_path, output_path):
 
         enhancer_contrast = ImageEnhance.Contrast(final_pil)
         final_pil = enhancer_contrast.enhance(1.1)
+
+        if final_rotation in (90, 180, 270):
+            logger.info(f"Finale Drehung: {final_rotation}°")
+            final_pil = apply_final_rotation(final_pil, final_rotation)
 
         # Als WebP speichern
         final_pil.save(output_path, 'WEBP', quality=95)

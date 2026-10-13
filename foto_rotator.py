@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Image Rotator - Dreht Bilder verlustfrei um einstellbare Winkel
+Image Rotator - Dreht und spiegelt Bilder verlustfrei
 Unterstützte Formate: JPG, PNG, TIFF, WebP
 """
 
@@ -8,12 +8,15 @@ import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
 import threading
 from pathlib import Path
-from PIL import Image
+from PIL import Image, ImageOps
 import os
 
 # ── Hilfsfunktionen ──────────────────────────────────────────────────────────
 
 SUPPORTED = {".jpg", ".jpeg", ".png", ".tif", ".tiff", ".webp"}
+
+# Tkinter-Radiobuttons: value=0 wird oft nicht gesetzt (bleibt beim Default).
+ANGLE_NONE = -1
 
 ROTATION_MAP = {
     90: Image.ROTATE_90,
@@ -22,42 +25,61 @@ ROTATION_MAP = {
 }
 
 
-def rotate_image(src: Path, dst_folder: Path, angle: int, quality: int = 100) -> str:
-    """Rotiert ein Bild und speichert es im Zielordner.
+def _apply_transforms(img: Image.Image, angle: int, flip_horizontal: bool,
+                      lossless_jpeg: bool) -> Image.Image:
+    """Wendet Rotation (optional) und horizontale Spiegelung an."""
+    result = img
+    if lossless_jpeg and angle in ROTATION_MAP:
+        result = result.transpose(ROTATION_MAP[angle])
+    elif angle != 0:
+        result = result.rotate(-angle, expand=True)
+    if flip_horizontal:
+        result = result.transpose(Image.FLIP_LEFT_RIGHT)
+    return result
+
+
+def _save_image(img: Image.Image, dst: Path, ext: str, quality: int, exif: bytes) -> None:
+    if ext in {".jpg", ".jpeg"}:
+        subsampling = 0 if quality == 100 else -1
+        save_kwargs = {"quality": quality, "subsampling": subsampling}
+        if exif:
+            save_kwargs["exif"] = exif
+        img.save(dst, **save_kwargs)
+    elif ext in {".tif", ".tiff"}:
+        img.save(dst, compression="tiff_lzw")
+    elif ext == ".webp":
+        lossless = quality == 100
+        img.save(dst, lossless=lossless, quality=quality)
+    else:
+        img.save(dst)
+
+
+def transform_image(src: Path, dst_folder: Path, angle: int, quality: int = 100,
+                    flip_horizontal: bool = False) -> str:
+    """Rotiert/spiegelt ein Bild und speichert es im Zielordner.
 
     quality: 1–100 (JPEG & WebP). 100 = verlustfrei/maximal.
     PNG und TIFF werden immer verlustfrei gespeichert.
+    flip_horizontal: Spiegelung an der vertikalen Achse (links ↔ rechts).
     """
     img = Image.open(src)
-
-    # EXIF-Daten sichern (für JPEG)
-    exif = img.info.get("exif", b"")
-
+    img = ImageOps.exif_transpose(img)
     ext = src.suffix.lower()
     dst = dst_folder / src.name
+    lossless_jpeg = ext in {".jpg", ".jpeg"} and angle in ROTATION_MAP
 
     try:
-        if ext in {".jpg", ".jpeg"} and angle in ROTATION_MAP:
-            rotated = img.transpose(ROTATION_MAP[angle])
-            # subsampling=0 nur bei quality=100 (echte Lossless-Chroma)
-            subsampling = 0 if quality == 100 else -1
-            save_kwargs = {"quality": quality, "subsampling": subsampling}
-            if exif:
-                save_kwargs["exif"] = exif
-            rotated.save(dst, **save_kwargs)
-        else:
-            rotated = img.rotate(-angle, expand=True)
-            if ext in {".tif", ".tiff"}:
-                rotated.save(dst, compression="tiff_lzw")
-            elif ext == ".webp":
-                lossless = quality == 100
-                rotated.save(dst, lossless=lossless, quality=quality)
-            else:
-                # PNG: verlustfrei, quality wird ignoriert
-                rotated.save(dst)
+        result = _apply_transforms(img, angle, flip_horizontal, lossless_jpeg)
+        # Kein altes EXIF – Orientation-Tag würde sonst erneut drehen.
+        _save_image(result, dst, ext, quality, exif=b"")
         return f"✓ {src.name}"
     except Exception as e:
         return f"✗ {src.name}: {e}"
+
+
+def rotate_image(src: Path, dst_folder: Path, angle: int, quality: int = 100) -> str:
+    """Abwärtskompatibler Alias für reine Rotation ohne Spiegelung."""
+    return transform_image(src, dst_folder, angle, quality, flip_horizontal=False)
 
 
 # ── GUI ──────────────────────────────────────────────────────────────────────
@@ -125,7 +147,7 @@ class ImageRotatorApp(tk.Tk):
         # ── Titel
         ttk.Label(self, text="⟳  BILD-ROTATOR", style="Head.TLabel") \
             .grid(row=0, column=0, **pad, sticky="w")
-        ttk.Label(self, text="Verlustfreie Rotation · JPG · PNG · TIFF · WebP",
+        ttk.Label(self, text="Rotation · Horizontal spiegeln · JPG · PNG · TIFF · WebP",
                   style="TLabel", foreground="#888") \
             .grid(row=1, column=0, padx=18, pady=0, sticky="w")
 
@@ -162,17 +184,28 @@ class ImageRotatorApp(tk.Tk):
             .grid(row=2, column=0, sticky="w", pady=8)
         angle_frame = ttk.Frame(panel, style="Panel.TFrame")
         angle_frame.grid(row=2, column=1, columnspan=2, sticky="w")
-        self.angle_var = tk.IntVar(value=90)
-        for angle in (90, 180, 270):
-            ttk.Radiobutton(angle_frame, text=f"{angle}°",
-                            variable=self.angle_var, value=angle) \
+        self.angle_var = tk.IntVar(value=ANGLE_NONE)
+        for rb_value, label in ((ANGLE_NONE, "Keine"), (90, "90°"), (180, "180°"), (270, "270°")):
+            ttk.Radiobutton(angle_frame, text=label,
+                            variable=self.angle_var, value=rb_value) \
                 .pack(side="left", padx=10)
+
+        # Horizontal spiegeln
+        self.flip_horizontal_var = tk.BooleanVar(value=False)
+        flip_frame = ttk.Frame(panel, style="Panel.TFrame")
+        flip_frame.grid(row=3, column=0, columnspan=3, sticky="w", pady=4)
+        tk.Checkbutton(flip_frame, text="Horizontal spiegeln (Fisch-Richtung korrigieren)",
+                       variable=self.flip_horizontal_var,
+                       bg=C["PANEL"], fg=C["FG"], selectcolor=C["PANEL"],
+                       activebackground=C["PANEL"], activeforeground=C["ACCENT"],
+                       font=("Courier New", 10)) \
+            .pack(side="left")
 
         # Qualität
         ttk.Label(panel, text="Qualität:", style="Sub.TLabel") \
-            .grid(row=3, column=0, sticky="w", pady=6)
+            .grid(row=4, column=0, sticky="w", pady=6)
         quality_frame = ttk.Frame(panel, style="Panel.TFrame")
-        quality_frame.grid(row=3, column=1, columnspan=2, sticky="ew")
+        quality_frame.grid(row=4, column=1, columnspan=2, sticky="ew")
 
         self.quality_var = tk.IntVar(value=100)
         self.quality_label = tk.Label(quality_frame, text="100  (verlustfrei)",
@@ -189,7 +222,7 @@ class ImageRotatorApp(tk.Tk):
 
         ttk.Label(panel, text="ℹ  PNG & TIFF sind immer verlustfrei (Qualität wird ignoriert).",
                   style="Sub.TLabel", foreground="#666", font=("Courier New", 8)) \
-            .grid(row=4, column=0, columnspan=3, sticky="w", pady=0)
+            .grid(row=5, column=0, columnspan=3, sticky="w", pady=0)
 
         # Unterordner einschließen
         self.recursive_var = tk.BooleanVar(value=False)
@@ -198,10 +231,10 @@ class ImageRotatorApp(tk.Tk):
                        bg=C["PANEL"], fg=C["FG"], selectcolor=C["PANEL"],
                        activebackground=C["PANEL"], activeforeground=C["ACCENT"],
                        font=("Courier New", 10)) \
-            .grid(row=5, column=0, columnspan=3, sticky="w", pady=4)
+            .grid(row=6, column=0, columnspan=3, sticky="w", pady=4)
 
         # ── Start-Button
-        self.btn_start = ttk.Button(self, text="▶  ROTATION STARTEN",
+        self.btn_start = ttk.Button(self, text="▶  VERARBEITUNG STARTEN",
                                     style="Accent.TButton",
                                     command=self._start)
         self.btn_start.grid(row=4, column=0, padx=18, pady=10, sticky="ew")
@@ -265,6 +298,16 @@ class ImageRotatorApp(tk.Tk):
         src = self.src_var.get().strip()
         dst = self.dst_var.get().strip()
         angle = self.angle_var.get()
+        if angle == ANGLE_NONE:
+            angle = 0
+        flip_horizontal = self.flip_horizontal_var.get()
+
+        if angle == 0 and not flip_horizontal:
+            messagebox.showerror(
+                "Fehler",
+                "Bitte einen Drehwinkel wählen oder „Horizontal spiegeln“ aktivieren.",
+            )
+            return
 
         if not src or not Path(src).is_dir():
             messagebox.showerror("Fehler", "Bitte einen gültigen Eingabeordner wählen.")
@@ -294,14 +337,16 @@ class ImageRotatorApp(tk.Tk):
         self.progress["maximum"] = len(files)
         self.progress["value"] = 0
 
-        threading.Thread(target=self._worker,
-                         args=(files, Path(dst), angle, self.quality_var.get()),
-                         daemon=True).start()
+        threading.Thread(
+            target=self._worker,
+            args=(files, Path(dst), angle, self.quality_var.get(), flip_horizontal),
+            daemon=True,
+        ).start()
 
-    def _worker(self, files, dst_folder, angle, quality):
+    def _worker(self, files, dst_folder, angle, quality, flip_horizontal):
         ok = err = 0
         for i, f in enumerate(files, 1):
-            result = rotate_image(f, dst_folder, angle, quality)
+            result = transform_image(f, dst_folder, angle, quality, flip_horizontal)
             if result.startswith("✓"):
                 ok += 1
             else:
